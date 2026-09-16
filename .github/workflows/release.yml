@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build executable
+        run: |
+          cargo build --release
+          cp target/release/deployer ./deployer
+
+      - name: Create tag
+        id: tag
+        run: |
+          VERSION="v$(date +'%Y.%m.%d.%H%M')"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.version }}
+          name: Release ${{ steps.tag.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload executable
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.version }}
+          files: deployer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

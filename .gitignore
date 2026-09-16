@@ -1,0 +1,4 @@
+/target
+deployer.conf
+docker-compose.yml
+.env
